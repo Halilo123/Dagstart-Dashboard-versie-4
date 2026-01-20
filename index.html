@@ -312,7 +312,7 @@
         <div class="panel-h">
           <div>
             <h2>Vandaag</h2>
-            <div class="hint">Alle diensten zichtbaar • medewerkers klik je aan • THT auto-kleur & sort</div>
+            <div class="hint">Alle diensten zichtbaar • medewerkers klik je aan • THT staat rechts in beeld</div>
           </div>
           <div class="chips">
             <span class="badge" id="dateBadge">Datum: —</span>
@@ -378,31 +378,17 @@
             </div>
           </div>
 
-          <div class="twoCol" style="margin-top:14px;">
-            <div>
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <h3 style="margin:0;">Roosteraanpassingen</h3>
-                <span class="hint">Wat | Owner | good/warn/bad</span>
-              </div>
-              <div class="list" id="rosterList" style="margin-top:10px;"></div>
-
-              <div class="editor" id="editorRoster">
-                <label style="margin-top:10px;">Roosteraanpassingen (1 per regel)</label>
-                <textarea id="inRoster" placeholder="Bijv. Wissel: Piet ↔ Jan | Coördinator | warn"></textarea>
-              </div>
+          <!-- Roosteraanpassingen (blijft links) -->
+          <div style="margin-top:14px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <h3 style="margin:0;">Roosteraanpassingen</h3>
+              <span class="hint">Wat | Owner | good/warn/bad</span>
             </div>
+            <div class="list" id="rosterList" style="margin-top:10px;"></div>
 
-            <div>
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                <h3 style="margin:0;">Actualiteiten / THT</h3>
-                <span class="hint">Item | DD-MM-YYYY | Opmerking (auto kleur + sort)</span>
-              </div>
-              <div class="list" id="thtList" style="margin-top:10px;"></div>
-
-              <div class="editor" id="editorTHT">
-                <label style="margin-top:10px;">THT items (1 per regel)</label>
-                <textarea id="inTHT" placeholder="Bijv. Artikel X | 25-01-2026 | actie: opmaken"></textarea>
-              </div>
+            <div class="editor" id="editorRoster">
+              <label style="margin-top:10px;">Roosteraanpassingen (1 per regel)</label>
+              <textarea id="inRoster" placeholder="Bijv. Wissel: Piet ↔ Jan | Coördinator | warn"></textarea>
             </div>
           </div>
 
@@ -435,15 +421,25 @@
       <div class="panel">
         <div class="panel-h">
           <div>
-            <h2>Logistiek</h2>
-            <div class="hint">Pakketjes • bevoorrading • notities</div>
+            <h2>Actualiteiten / THT</h2>
+            <div class="hint">Item | DD-MM-YYYY | Opmerking (auto kleur + sort)</div>
           </div>
           <div class="chips">
-            <span class="badge">Doordeweeks</span>
+            <span class="badge bad">≤ 1 maand</span>
+            <span class="badge warn">≤ 3 maanden</span>
           </div>
         </div>
 
         <div class="panel-b">
+          <div class="list" id="thtList"></div>
+
+          <div class="editor" id="editorTHT">
+            <label style="margin-top:10px;">THT items (1 per regel)</label>
+            <textarea id="inTHT" placeholder="Bijv. Artikel X | 25-01-2026 | actie: opmaken"></textarea>
+          </div>
+
+          <div style="margin-top:14px;"></div>
+
           <div class="tile" id="pkgTile">
             <div class="label">Pakketjes vandaag</div>
             <div class="value" id="pkgValue">—</div>
@@ -511,13 +507,13 @@
     </div>
 
     <div class="hint" style="margin-top:14px;">
-      Opslaan is lokaal op de browser/PC (localStorage). THT: <span class="badge bad">rood ≤ 1 maand</span> <span class="badge warn">oranje ≤ 3 maanden</span>
+      Opslaan is lokaal op de browser/PC (localStorage).
     </div>
   </div>
 
 <script>
-  const LS_KEY = "dagstart_dashboard_employees_v3";
-  const HISTORY_PREFIX = "dagstart_history_assignments_"; // + YYYY-MM-DD
+  const LS_KEY = "dagstart_dashboard_employees_v4";
+  const HISTORY_PREFIX = "dagstart_history_assignments_";
 
   const SERVICES = [
     { name:"OC vroeg", code:"OC-V" },
@@ -569,60 +565,21 @@
     onlyFilled: false,
 
     employees: [
-      "Halil Akbulak",
-      "Jerico v Baayen",
-      "Roy Bennink",
-      "Jouke Bergboer",
-      "Christoph de Bosscher",
-      "Kai Bouwman",
-      "Slavojka Bujadnjak",
-      "Snježana Buljan-Delic",
-      "Tim de Cooker",
-      "Kees Dekker",
-      "Marvin Directie",
-      "Jan-Willem van Dijk",
-      "Wouter van Dijk",
-      "Gerard van Doorn",
-      "Mile Dzemov",
-      "Lyon van de Elskamp",
-      "Hafida Ettaoui",
-      "Marga Feddes",
-      "Angelique Florie",
-      "Igor Golac",
-      "André Hemelrijk",
-      "Chloe Hoeijenbos",
-      "Grada van der Horst",
-      "Yvonne van Hugten",
-      "Lidija Ilieva",
-      "Aco Ivanov (2)",
-      "Dennis Jansen",
-      "Elena Klintouk",
-      "Dejan Kostic",
-      "Chris van der Linden",
-      "Joelle Linschoten",
-      "Sebastian Murphy",
-      "Regina Nijhuis",
-      "Stan van den Oudendal",
-      "Ronald de Rooij",
-      "Ruben Schomakermeijer",
-      "Jelle Smits",
-      "Gordon Soe-Agnie",
-      "Ruben Surija",
-      "Eliza Thakoer",
-      "Younes Toufiq",
-      "Lorenz van Vliet",
-      "Frank van Wierst",
-      "Karin Witteveen",
-      "Thom Woesthoff",
-      "Jurriaan Zwanenburg"
+      "Halil Akbulak","Jerico v Baayen","Roy Bennink","Jouke Bergboer","Christoph de Bosscher","Kai Bouwman",
+      "Slavojka Bujadnjak","Snježana Buljan-Delic","Tim de Cooker","Kees Dekker","Marvin Directie","Jan-Willem van Dijk",
+      "Wouter van Dijk","Gerard van Doorn","Mile Dzemov","Lyon van de Elskamp","Hafida Ettaoui","Marga Feddes",
+      "Angelique Florie","Igor Golac","André Hemelrijk","Chloe Hoeijenbos","Grada van der Horst","Yvonne van Hugten",
+      "Lidija Ilieva","Aco Ivanov (2)","Dennis Jansen","Elena Klintouk","Dejan Kostic","Chris van der Linden",
+      "Joelle Linschoten","Sebastian Murphy","Regina Nijhuis","Stan van den Oudendal","Ronald de Rooij",
+      "Ruben Schomakermeijer","Jelle Smits","Gordon Soe-Agnie","Ruben Surija","Eliza Thakoer","Younes Toufiq",
+      "Lorenz van Vliet","Frank van Wierst","Karin Witteveen","Thom Woesthoff","Jurriaan Zwanenburg"
     ],
 
     packages: { total: "", status: "", detail: "—" },
     supply:   { total: "", status: "", detail: "—" },
     notes: "",
 
-    assignments: {}, // code -> { people: string[], timeOverride, note }
-
+    assignments: {},
     rosterChanges: [],
     tht: [],
   };
@@ -652,14 +609,10 @@
   }
   function escapeHtml(str){
     return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll("\"","&quot;")
-      .replaceAll("'","&#039;");
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll("\"","&quot;").replaceAll("'","&#039;");
   }
 
-  // OK-3, MD en alle W-* behalve W-PP vroeg
   function defaultTimeForCode(code){
     const c = String(code||"").toUpperCase().trim();
     const isWKZ = c.startsWith("W-");
@@ -668,7 +621,6 @@
     return "08:00–16:30";
   }
 
-  // --- THT (DD-MM-YYYY) ---
   function parseDateFlexible(s){
     s = (s || "").trim();
     if(!s) return null;
@@ -727,14 +679,11 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  // --- History (voor kopieer vorige dag) ---
   function getEffectiveDateForHistory(){
-    // Als state.date leeg is: gebruik vandaag (stabielere history keys)
     return (state.date && String(state.date).trim()) ? String(state.date).trim() : todayISO();
   }
 
   function snapshotAssignments(){
-    // Deep clone maar alleen relevante velden
     const snap = {};
     SERVICES.forEach(s => {
       const a = state.assignments?.[s.code] || {};
@@ -750,55 +699,41 @@
 
   function storeHistoryForDate(dateStr){
     try{
-      const key = HISTORY_PREFIX + dateStr;
-      localStorage.setItem(key, JSON.stringify({ date: dateStr, assignments: snapshotAssignments() }));
-    }catch{
-      // no-op
-    }
+      localStorage.setItem(HISTORY_PREFIX + dateStr, JSON.stringify({ date: dateStr, assignments: snapshotAssignments() }));
+    }catch{}
   }
 
   function listHistoryDates(){
     const dates = [];
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
-      if(!k) continue;
-      if(k.startsWith(HISTORY_PREFIX)){
+      if(k && k.startsWith(HISTORY_PREFIX)){
         const dateStr = k.substring(HISTORY_PREFIX.length);
         if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) dates.push(dateStr);
       }
     }
-    dates.sort(); // lex sort werkt voor YYYY-MM-DD
+    dates.sort();
     return dates;
   }
 
   function mostRecentHistoryBefore(dateStr){
-    const dates = listHistoryDates();
-    const filtered = dates.filter(d => d < dateStr);
-    return filtered.length ? filtered[filtered.length - 1] : null;
+    const dates = listHistoryDates().filter(d => d < dateStr);
+    return dates.length ? dates[dates.length - 1] : null;
   }
 
   function loadHistory(dateStr){
     try{
       const raw = localStorage.getItem(HISTORY_PREFIX + dateStr);
       if(!raw) return null;
-      const obj = JSON.parse(raw);
-      if(!obj || typeof obj !== "object") return null;
-      return obj;
-    }catch{
-      return null;
-    }
+      return JSON.parse(raw);
+    }catch{ return null; }
   }
 
   function copyAssignmentsFromPreviousDay(){
     const todayKey = getEffectiveDateForHistory();
     const prev = mostRecentHistoryBefore(todayKey) || (listHistoryDates().slice(-1)[0] || null);
-
-    if(!prev){
-      alert("Geen eerdere bezetting gevonden. Tip: sla eerst één dag op met bezetting.");
-      return;
-    }
-    if(prev === todayKey){
-      alert("Geen eerdere dag gevonden om te kopiëren.");
+    if(!prev || prev === todayKey){
+      alert("Geen eerdere bezetting gevonden. Tip: sla eerst een dag op met bezetting.");
       return;
     }
 
@@ -808,7 +743,6 @@
       return;
     }
 
-    // Overwrite alleen de dienst-assignments
     state.assignments = {};
     Object.keys(hist.assignments).forEach(code => {
       const a = hist.assignments[code] || {};
@@ -868,12 +802,11 @@
     SERVICES.forEach(s => {
       const a = state.assignments?.[s.code] || {};
       const peopleArr = Array.isArray(a.people) ? a.people : [];
+      if(onlyFilled && peopleArr.length === 0) return;
+
       const people = peopleArr.join(", ");
       const timeOverride = String(a.timeOverride||"").trim();
       const note = String(a.note||"").trim();
-
-      if(onlyFilled && peopleArr.length === 0) return;
-
       const time = timeOverride ? timeOverride : defaultTimeForCode(s.code);
 
       const tr = document.createElement("tr");
@@ -905,11 +838,9 @@
         chips.appendChild(hint);
         return;
       }
-
       current.forEach((name, idx) => {
         const c = document.createElement("span");
         c.className = "empChip";
-
         const t = document.createElement("span");
         t.textContent = name;
 
@@ -1006,14 +937,12 @@
     rerenderChips();
     wrap.appendChild(chips);
     wrap.appendChild(picker);
-
     return wrap;
   }
 
   function renderServicesEditor(){
     const tb = el("serviceEditorTable");
     tb.innerHTML = "";
-
     SERVICES.forEach(s => {
       const a = state.assignments?.[s.code] || {};
       const timeOverride = String(a.timeOverride||"");
@@ -1059,7 +988,6 @@
       tr.appendChild(tdPeople);
       tr.appendChild(tdTime);
       tr.appendChild(tdNote);
-
       tb.appendChild(tr);
     });
   }
@@ -1072,7 +1000,6 @@
       const title = parts[0] || "—";
       const owner = parts[1] || "";
       const status = safeStatus(parts[2] || "");
-
       const item = document.createElement("div");
       item.className = "item";
       item.innerHTML = `
@@ -1136,6 +1063,7 @@
 
     el("inNotes").value = state.notes || "";
     el("inEmployees").value = (state.employees||[]).join("\n");
+    el("inRoster").value = (state.rosterChanges||[]).join("\n");
   }
 
   function readInputsToState(){
@@ -1147,7 +1075,6 @@
 
     state.rosterChanges = (el("inRoster").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
     state.tht = (el("inTHT").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
-
     state.employees = (el("inEmployees").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
 
     state.packages = {
@@ -1194,15 +1121,12 @@
 
     setText("modeLabel", editMode ? "Edit" : "View");
     el("dotEdit").className = "dot " + (editMode ? "warn" : "");
-
     if(editMode) renderServicesEditor();
   }
 
   function tick(){
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2,"0");
-    const mm = String(now.getMinutes()).padStart(2,"0");
-    setText("clock", `${hh}:${mm}`);
+    setText("clock", `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`);
     setText("today", now.toLocaleDateString("nl-NL", { year:"numeric", month:"long", day:"numeric" }));
     setText("weekday", now.toLocaleDateString("nl-NL", { weekday:"long" }));
     el("dotLive").className = "dot good";
@@ -1236,7 +1160,6 @@
     alert("Nieuwe dagstart klaar ✅ (daggegevens zijn gewist)");
   }
 
-  // Buttons / events
   el("newDayBtn").addEventListener("click", () => {
     if(confirm("Nieuwe dagstart starten? Dit wist bezetting/pakketjes/bevoorrading/rooster/THT/notities.")){
       newDaystart();
@@ -1257,11 +1180,8 @@
 
   el("saveBtn").addEventListener("click", () => {
     if(editMode) readInputsToState();
-
-    // ✅ bij elke save: history snapshot van bezetting bewaren
     const dateKey = getEffectiveDateForHistory();
     storeHistoryForDate(dateKey);
-
     saveState(state);
     render();
     alert("Opgeslagen op deze browser/PC ✅");
@@ -1282,7 +1202,6 @@
     render();
   });
 
-  // Init
   tick();
   setInterval(tick, 1000 * 10);
   render();
