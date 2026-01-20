@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dagstart Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --border:rgba(255,255,255,.08);
+      --text:#e8eefc;
+      --muted:rgba(232,238,252,.72);
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --chip:rgba(255,255,255,.08);
+      --shadow: 0 10px 28px rgba(0,0,0,.30);
+      --radius:18px;
+      --radius2:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 700px at 20% 5%, rgba(59,130,246,.20), transparent 55%),
+                  radial-gradient(900px 600px at 80% 10%, rgba(34,197,94,.14), transparent 55%),
+                  radial-gradient(1000px 700px at 40% 100%, rgba(245,158,11,.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+    }
+    .wrap{max-width: 1750px; margin:0 auto; padding:16px;}
+    @media(min-width:900px){ .wrap{padding:26px;} }
+
+    .topbar{
+      display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .brand{display:flex; align-items:flex-start; gap:12px;}
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: linear-gradient(135deg, rgba(59,130,246,.95), rgba(34,197,94,.75));
+      box-shadow: var(--shadow);
+      border:1px solid var(--border);
+    }
+    h1{margin:0; font-size: 22px; letter-spacing:-.02em;}
+    .sub{margin:2px 0 0 0; color:var(--muted); font-size: 13px;}
+
+    .chips{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius: 999px; background: var(--chip);
+      border: 1px solid var(--border);
+      font-size: 13px; color: var(--text);
+    }
+    .dot{width:9px; height:9px; border-radius:99px; background: rgba(255,255,255,.35);}
+    .dot.good{background: var(--good);}
+    .dot.warn{background: var(--warn);}
+    .dot.bad{background: var(--bad);}
+
+    .btnrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    button{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      font-weight: 650;
+      cursor:pointer;
+    }
+    button:hover{background: rgba(255,255,255,.10);}
+    button.primary{
+      background: rgba(59,130,246,.18);
+      border-color: rgba(59,130,246,.35);
+    }
+    button.danger{
+      background: rgba(239,68,68,.14);
+      border-color: rgba(239,68,68,.35);
+    }
+    button.neutral{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .grid{
+      display:grid;
+      gap:14px;
+      grid-template-columns: 1fr;
+    }
+    @media(min-width:1200px){
+      .grid{ grid-template-columns: 1.4fr .6fr; }
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel-h{
+      padding:14px 16px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.12);
+    }
+    .panel h2{margin:0; font-size: 16px;}
+    .hint{color: var(--muted); font-size: 12px; margin-top:3px;}
+    .panel-b{padding:14px 16px;}
+
+    .kpi{
+      display:grid;
+      gap:10px;
+      grid-template-columns: 1fr;
+    }
+    @media(min-width:700px){
+      .kpi{grid-template-columns: repeat(3, 1fr);}
+    }
+    .tile{
+      background: rgba(0,0,0,.15);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      padding:12px 12px;
+      min-height:86px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .tile .label{color: var(--muted); font-size: 12px;}
+    .tile .value{font-size: 22px; font-weight: 800; letter-spacing:-.02em; margin-top:6px;}
+    .tile .small{color: var(--muted); font-size: 12px; margin-top:6px;}
+    .tile.good{border-color: rgba(34,197,94,.35);}
+    .tile.warn{border-color: rgba(245,158,11,.35);}
+    .tile.bad{border-color: rgba(239,68,68,.35);}
+
+    table{width:100%; border-collapse:separate; border-spacing:0 10px;}
+    .trow{
+      background: rgba(0,0,0,.15);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      overflow:hidden;
+    }
+    .trow td, .trow th{
+      padding:10px 10px;
+      font-size:13px;
+      white-space:nowrap;
+      vertical-align:top;
+    }
+    .twrap{overflow:auto;}
+
+    .twoCol{
+      display:grid;
+      gap:14px;
+      grid-template-columns: 1fr;
+    }
+    @media(min-width:900px){
+      .twoCol{grid-template-columns: 1fr 1fr;}
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .item{
+      background: rgba(0,0,0,.15);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      padding: 10px 12px;
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      align-items:flex-start;
+    }
+    .item .left{min-width:0;}
+    .item .title{font-weight:700; margin:0; font-size: 14px;}
+    .item .meta{margin:4px 0 0 0; color: var(--muted); font-size: 12px;}
+
+    .badge{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding:6px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      white-space:nowrap;
+    }
+    .badge.good{border-color: rgba(34,197,94,.35);}
+    .badge.warn{border-color: rgba(245,158,11,.35);}
+    .badge.bad{border-color: rgba(239,68,68,.35);}
+
+    .editor{
+      display:none;
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid var(--border);
+    }
+    .editor.on{display:block;}
+    textarea, input[type="text"], input[type="number"], input[type="date"], select{
+      width:100%;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding:10px 12px;
+      font-size: 14px;
+      outline:none;
+    }
+    textarea{min-height:90px; resize:vertical;}
+    label{display:block; color: var(--muted); font-size: 12px; margin-bottom:6px;}
+    .formgrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media(min-width:700px){ .formgrid{ grid-template-columns: 1fr 1fr; } }
+
+    .rowtools{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between;}
+    .toggle{
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px; border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      font-size: 13px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .toggle input{accent-color: #60a5fa;}
+
+    /* Employee chips + picker */
+    .empWrap{display:flex; flex-direction:column; gap:8px; min-width:340px;}
+    .empChips{display:flex; flex-wrap:wrap; gap:8px;}
+    .empChip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+    }
+    .empChip button{
+      padding:0;
+      width:22px; height:22px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      font-weight:800;
+      line-height:1;
+    }
+    .empPicker{
+      position:relative;
+    }
+    .dropdown{
+      position:absolute;
+      top: 44px;
+      left:0;
+      right:0;
+      background: rgba(13, 23, 42, .98);
+      border:1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      max-height: 240px;
+      overflow:auto;
+      z-index: 20;
+      display:none;
+    }
+    .dropdown.on{display:block;}
+    .ddItem{
+      padding:10px 12px;
+      cursor:pointer;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .ddItem:hover{background: rgba(255,255,255,.06);}
+    .ddSmall{color: var(--muted); font-size: 12px;}
+    .ddHint{padding:10px 12px; color: var(--muted); font-size: 12px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1 id="title">Dagstart Dashboard</h1>
+          <p class="sub" id="subtitle">Doordeweeks overzicht</p>
+        </div>
+      </div>
+
+      <div class="chips">
+        <div class="chip"><span class="dot good" id="dotLive"></span><span id="clock">--:--</span></div>
+        <div class="chip"><span class="dot"></span><span id="today">--</span></div>
+        <div class="chip"><span class="dot warn"></span><span id="weekday">--</span></div>
+        <div class="chip"><span class="dot" id="dotEdit"></span><span id="modeLabel">View</span></div>
+      </div>
+
+      <div class="btnrow">
+        <button class="neutral" id="newDayBtn">Nieuwe dagstart</button>
+        <button class="primary" id="toggleEdit">Bewerken</button>
+        <button id="saveBtn">Opslaan</button>
+        <button class="danger" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="panel">
+        <div class="panel-h">
+          <div>
+            <h2>Vandaag</h2>
+            <div class="hint">Alle diensten zichtbaar • medewerkers klik je aan • THT auto-kleur & sort</div>
+          </div>
+          <div class="chips">
+            <span class="badge" id="dateBadge">Datum: —</span>
+            <span class="badge" id="teamBadge">Team: —</span>
+          </div>
+        </div>
+
+        <div class="panel-b">
+          <div class="kpi" id="kpiRow"></div>
+
+          <!-- Diensten -->
+          <div style="margin-top:14px;">
+            <div class="rowtools">
+              <div>
+                <h3 style="margin:0;">Diensten & bezetting</h3>
+                <div class="hint">OK-3 en MD starten 07:00 • rest 08:00 (tenzij override)</div>
+              </div>
+              <label class="toggle" title="Handig voor TV-view">
+                <input type="checkbox" id="onlyFilled" />
+                Toon alleen met medewerkers
+              </label>
+            </div>
+
+            <div class="twrap" style="margin-top:10px;">
+              <table>
+                <thead>
+                  <tr class="trow">
+                    <th style="text-align:left;">Dienst</th>
+                    <th style="text-align:left;">Medewerkers</th>
+                    <th style="text-align:left;">Tijd</th>
+                    <th style="text-align:left;">Opmerking</th>
+                  </tr>
+                </thead>
+                <tbody id="serviceTable"></tbody>
+              </table>
+            </div>
+
+            <!-- Editor diensten -->
+            <div class="editor" id="editorServices">
+              <div class="hint" style="margin-bottom:10px;">
+                Tip: maak eerst je medewerkerslijst (hieronder). Daarna kun je per dienst medewerkers <b>aanklikken</b>.
+              </div>
+              <div class="twrap">
+                <table>
+                  <thead>
+                    <tr class="trow">
+                      <th style="text-align:left;">Code</th>
+                      <th style="text-align:left;">Dienst</th>
+                      <th style="text-align:left;">Medewerkers (klik)</th>
+                      <th style="text-align:left;">Tijd override</th>
+                      <th style="text-align:left;">Opmerking</th>
+                    </tr>
+                  </thead>
+                  <tbody id="serviceEditorTable"></tbody>
+                </table>
+              </div>
+
+              <div class="editor on" style="border-top:none; padding-top:0; margin-top:14px;">
+                <label>Medewerkerslijst (1 naam per regel)</label>
+                <textarea id="inEmployees" placeholder="Bijv.&#10;Younes&#10;Tim&#10;Lion&#10;Mille"></textarea>
+                <div class="hint">Na opslaan kun je per dienst zoeken en klikken.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="twoCol" style="margin-top:14px;">
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <h3 style="margin:0;">Roosteraanpassingen</h3>
+                <span class="hint">Wat | Owner | good/warn/bad</span>
+              </div>
+              <div class="list" id="rosterList" style="margin-top:10px;"></div>
+
+              <div class="editor" id="editorRoster">
+                <label style="margin-top:10px;">Roosteraanpassingen (1 per regel)</label>
+                <textarea id="inRoster" placeholder="Bijv. Wissel: Piet ↔ Jan | Coördinator | warn"></textarea>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <h3 style="margin:0;">Actualiteiten / THT</h3>
+                <span class="hint">Item | DD-MM-YYYY | Opmerking (auto kleur + sort)</span>
+              </div>
+              <div class="list" id="thtList" style="margin-top:10px;"></div>
+
+              <div class="editor" id="editorTHT">
+                <label style="margin-top:10px;">THT items (1 per regel)</label>
+                <textarea id="inTHT" placeholder="Bijv. Artikel X | 25-01-2026 | actie: opmaken"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Editor header -->
+          <div class="editor" id="editorHeader">
+            <div class="formgrid" style="margin-top:12px;">
+              <div>
+                <label>Dashboard titel</label>
+                <input id="inTitle" type="text" />
+              </div>
+              <div>
+                <label>Subtitel</label>
+                <input id="inSubtitle" type="text" />
+              </div>
+              <div>
+                <label>Team label</label>
+                <input id="inTeam" type="text" placeholder="bijv. Team IC / Team Logistiek" />
+              </div>
+              <div>
+                <label>Datum (optioneel)</label>
+                <input id="inDate" type="date" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="panel">
+        <div class="panel-h">
+          <div>
+            <h2>Logistiek</h2>
+            <div class="hint">Pakketjes • bevoorrading • notities</div>
+          </div>
+          <div class="chips">
+            <span class="badge">Doordeweeks</span>
+          </div>
+        </div>
+
+        <div class="panel-b">
+          <div class="tile" id="pkgTile">
+            <div class="label">Pakketjes vandaag</div>
+            <div class="value" id="pkgValue">—</div>
+            <div class="small" id="pkgSmall">Inkomend / uitgaand</div>
+          </div>
+
+          <div class="tile" id="supplyTile" style="margin-top:10px;">
+            <div class="label">Bevoorrading</div>
+            <div class="value" id="supplyValue">—</div>
+            <div class="small" id="supplySmall">Leveringen / picks</div>
+          </div>
+
+          <div class="tile" id="notesTile" style="margin-top:10px;">
+            <div class="label">Notities</div>
+            <div class="small" id="notesView" style="white-space:pre-wrap; line-height:1.35;">—</div>
+          </div>
+
+          <div class="editor" id="editorSide">
+            <div class="formgrid">
+              <div>
+                <label>Pakketjes (totaal)</label>
+                <input id="inPkg" type="number" min="0" placeholder="bijv. 42" />
+              </div>
+              <div>
+                <label>Pakketjes status</label>
+                <select id="inPkgStatus">
+                  <option value="">none</option>
+                  <option value="good">good</option>
+                  <option value="warn">warn</option>
+                  <option value="bad">bad</option>
+                </select>
+              </div>
+              <div style="grid-column:1 / -1;">
+                <label>Pakketjes detail</label>
+                <input id="inPkgDetail" type="text" placeholder="bijv. 30 inkomend / 12 uitgaand" />
+              </div>
+
+              <div>
+                <label>Bevoorrading (totaal)</label>
+                <input id="inSupply" type="number" min="0" placeholder="bijv. 6" />
+              </div>
+              <div>
+                <label>Bevoorrading status</label>
+                <select id="inSupplyStatus">
+                  <option value="">none</option>
+                  <option value="good">good</option>
+                  <option value="warn">warn</option>
+                  <option value="bad">bad</option>
+                </select>
+              </div>
+              <div style="grid-column:1 / -1;">
+                <label>Bevoorrading detail</label>
+                <input id="inSupplyDetail" type="text" placeholder="bijv. 3 leveringen / 3 picks" />
+              </div>
+
+              <div style="grid-column:1 / -1;">
+                <label>Notities</label>
+                <textarea id="inNotes" placeholder="Wat moeten we vandaag niet vergeten?"></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="hint" style="margin-top:14px;">
+      Opslaan is lokaal op de browser/PC (localStorage). Voor meerdere schermen kunnen we later import/export uitbreiden.
+      <span class="badge" style="margin-left:10px;">THT: rood ≤ 1 maand • oranje ≤ 3 maanden</span>
+    </div>
+  </div>
+
+<script>
+  const LS_KEY = "dagstart_dashboard_employees_v1";
+
+  const SERVICES = [
+    { name:"OC vroeg", code:"OC-V" },
+    { name:"OC ondersteuning", code:"OC-O" },
+
+    { name:"WKZ - Panda/Papegaai", code:"W-PP" },
+    { name:"WKZ - Kameleon/Schildpad", code:"W-KS" },
+    { name:"WKZ - Verloskunde", code:"W-V" },
+    { name:"WKZ - Zwangeren/Kraam", code:"W-ZK" },
+    { name:"WKZ - Neonatologie", code:"W-N" },
+    { name:"WKZ - Pelikaan/Leeuw", code:"W-PL" },
+    { name:"WKZ - Overig", code:"W-Ov" },
+
+    { name:"UMC - C2 west en D2 oost/west", code:"CD2" },
+    { name:"UMC - C3 oost/west en D3 west", code:"CD3" },
+    { name:"UMC - MDL/Dialyse", code:"MD" },
+    { name:"UMC - D4 oost/west en D5 oost/west", code:"D45" },
+    { name:"UMC - B3 oost/B3 west/CCU", code:"B3" },
+    { name:"UMC - B4 oost/B4 west", code:"B4" },
+    { name:"UMC - B2/B5", code:"B25" },
+    { name:"UMC - C4/C5/D5", code:"CD45" },
+
+    { name:"OK 1 (F.00)", code:"OK-1" },
+    { name:"OK 2 (F.04)", code:"OK-2" },
+    { name:"OK 3 (OMLOOP)", code:"OK-3" },
+    { name:"OK 4 (WKZ)", code:"OK-4" },
+    { name:"IC1", code:"IC-A" },
+    { name:"IC2", code:"IC-B" },
+
+    { name:"UMC - AB-B", code:"AB-B" },
+    { name:"UMC - AB-C", code:"AB-C" },
+    { name:"UMC - AB-D", code:"AB-D" },
+
+    { name:"WKZ-Bode", code:"W-Bo" },
+    { name:"UMC-Bode", code:"U-Bo" },
+    { name:"UMC-Bode 2", code:"U-Bo2" },
+    { name:"UMC-Bode 3", code:"U-Bo3" },
+    { name:"Externe dienst en poli DIGD", code:"EXT" },
+    { name:"Medische hulpmiddelen dienst", code:"MHS" },
+    { name:"Projectmedewerker", code:"PROJ" },
+    { name:"Inwerken", code:"INW" },
+  ];
+
+  const DEFAULT = {
+    title: "Dagstart Dashboard",
+    subtitle: "Doordeweeks overzicht",
+    team: "Team —",
+    date: "",
+    onlyFilled: false,
+
+    employees: [
+      // vul via bewerkmodus
+    ],
+
+    packages: { total: "", status: "", detail: "—" },
+    supply:   { total: "", status: "", detail: "—" },
+    notes: "",
+
+    // code -> { people: string[], timeOverride, note }
+    assignments: {},
+
+    rosterChanges: [],
+    tht: [],
+  };
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return structuredClone(DEFAULT);
+      const s = JSON.parse(raw);
+      return {
+        ...structuredClone(DEFAULT),
+        ...s,
+        employees: Array.isArray(s.employees) ? s.employees : structuredClone(DEFAULT).employees,
+        assignments: { ...(structuredClone(DEFAULT).assignments), ...(s.assignments||{}) }
+      };
+    }catch{
+      return structuredClone(DEFAULT);
+    }
+  }
+  function saveState(s){ localStorage.setItem(LS_KEY, JSON.stringify(s)); }
+
+  function el(id){ return document.getElementById(id); }
+  function setText(id, v){ el(id).textContent = v; }
+  function safeStatus(s){
+    s = (s||"").toLowerCase().trim();
+    return (s==="good"||s==="warn"||s==="bad") ? s : "";
+  }
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll("\"","&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function defaultTimeForCode(code){
+    const c = String(code||"").toUpperCase().trim();
+    return (c==="OK-3" || c==="MD") ? "07:00–15:30" : "08:00–16:30";
+  }
+
+  // --- THT ---
+  function parseDateFlexible(s){
+    s = (s || "").trim();
+    if(!s) return null;
+
+    const dmy = /^(\d{2})-(\d{2})-(\d{4})$/;
+    const m1 = s.match(dmy);
+    if(m1){
+      const dd = parseInt(m1[1], 10);
+      const mm = parseInt(m1[2], 10);
+      const yyyy = parseInt(m1[3], 10);
+      const d = new Date(yyyy, mm - 1, dd);
+      if(d.getFullYear()===yyyy && d.getMonth()===(mm-1) && d.getDate()===dd) return d;
+      return null;
+    }
+
+    const ymd = /^(\d{4})-(\d{2})-(\d{2})$/;
+    const m2 = s.match(ymd);
+    if(m2){
+      const yyyy = parseInt(m2[1], 10);
+      const mm = parseInt(m2[2], 10);
+      const dd = parseInt(m2[3], 10);
+      const d = new Date(yyyy, mm - 1, dd);
+      if(d.getFullYear()===yyyy && d.getMonth()===(mm-1) && d.getDate()===dd) return d;
+      return null;
+    }
+    return null;
+  }
+
+  function thtStatus(dateStr){
+    const d = parseDateFlexible(dateStr);
+    if(!d) return { status:"warn", label:"ONGELDIGE DATUM", date:null };
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    d.setHours(0,0,0,0);
+
+    const diffDays = Math.floor((d.getTime() - today.getTime()) / (1000*60*60*24));
+    if(diffDays < 0) return { status:"bad", label:`VERLOPEN (${Math.abs(diffDays)}d)`, date:d };
+    if(diffDays <= 30) return { status:"bad", label:`≤1 maand (${diffDays}d)`, date:d };
+    if(diffDays <= 90) return { status:"warn", label:`≤3 maanden (${diffDays}d)`, date:d };
+    return { status:"good", label:`OK (${diffDays}d)`, date:d };
+  }
+
+  function mkBadge(text, status){
+    const b = document.createElement("span");
+    b.className = "badge " + (status || "");
+    b.textContent = text || "—";
+    return b;
+  }
+
+  function todayISO(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // UI state
+  let state = loadState();
+  let editMode = false;
+
+  function getPeopleArrayForCode(code){
+    if(!state.assignments[code]) state.assignments[code] = { people: [], timeOverride:"", note:"" };
+    if(!Array.isArray(state.assignments[code].people)) state.assignments[code].people = [];
+    return state.assignments[code].people;
+  }
+
+  function renderKPIs(){
+    const filledCount = SERVICES.reduce((acc, s) => {
+      const a = state.assignments?.[s.code] || {};
+      const people = Array.isArray(a.people) ? a.people : [];
+      return acc + (people.length ? 1 : 0);
+    }, 0);
+
+    const kpis = [
+      { label:"Pakketjes", value: state.packages.total!=="" ? String(state.packages.total) : "—", status: safeStatus(state.packages.status), small: state.packages.detail || "" },
+      { label:"Bevoorrading", value: state.supply.total!=="" ? String(state.supply.total) : "—", status: safeStatus(state.supply.status), small: state.supply.detail || "" },
+      { label:"Bezetting ingevuld", value: `${filledCount}/${SERVICES.length}`, status: (filledCount===0 ? "warn" : "good"), small: "Diensten met medewerkers" }
+    ];
+
+    const row = el("kpiRow");
+    row.innerHTML = "";
+    kpis.forEach(k => {
+      const tile = document.createElement("div");
+      tile.className = "tile " + (k.status || "");
+      tile.innerHTML = `
+        <div class="label">${escapeHtml(k.label)}</div>
+        <div class="value">${escapeHtml(k.value)}</div>
+        <div class="small">${escapeHtml(k.small || " ")}</div>
+      `;
+      row.appendChild(tile);
+    });
+  }
+
+  function renderServicesTable(){
+    const tb = el("serviceTable");
+    tb.innerHTML = "";
+    const onlyFilled = !!state.onlyFilled;
+
+    SERVICES.forEach(s => {
+      const a = state.assignments?.[s.code] || {};
+      const peopleArr = Array.isArray(a.people) ? a.people : [];
+      const people = peopleArr.join(", ");
+      const timeOverride = String(a.timeOverride||"").trim();
+      const note = String(a.note||"").trim();
+
+      if(onlyFilled && peopleArr.length === 0) return;
+
+      const time = timeOverride ? timeOverride : defaultTimeForCode(s.code);
+
+      const tr = document.createElement("tr");
+      tr.className = "trow";
+      tr.innerHTML = `
+        <td>${escapeHtml(s.code)} <span style="color: var(--muted); font-weight:500;">• ${escapeHtml(s.name)}</span></td>
+        <td style="color: var(--muted);">${escapeHtml(people || "—")}</td>
+        <td style="font-family: var(--mono);">${escapeHtml(time)}</td>
+        <td style="color: var(--muted);">${escapeHtml(note || "—")}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  // Employee picker row renderer
+  function buildEmployeePicker(code){
+    const wrap = document.createElement("div");
+    wrap.className = "empWrap";
+
+    const chips = document.createElement("div");
+    chips.className = "empChips";
+
+    const people = getPeopleArrayForCode(code);
+
+    function rerenderChips(){
+      chips.innerHTML = "";
+      const current = getPeopleArrayForCode(code);
+      if(current.length === 0){
+        const hint = document.createElement("span");
+        hint.className = "ddSmall";
+        hint.textContent = "Geen medewerkers geselecteerd";
+        chips.appendChild(hint);
+        return;
+      }
+
+      current.forEach((name, idx) => {
+        const c = document.createElement("span");
+        c.className = "empChip";
+        const t = document.createElement("span");
+        t.textContent = name;
+
+        const x = document.createElement("button");
+        x.type = "button";
+        x.textContent = "×";
+        x.title = "Verwijder";
+        x.addEventListener("click", () => {
+          const arr = getPeopleArrayForCode(code);
+          arr.splice(idx, 1);
+          rerenderChips();
+        });
+
+        c.appendChild(t);
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+    }
+
+    const picker = document.createElement("div");
+    picker.className = "empPicker";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Zoek medewerker…";
+    input.autocomplete = "off";
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "dropdown";
+
+    function normalizeList(list){
+      return (list||[])
+        .map(x => String(x).trim())
+        .filter(Boolean);
+    }
+
+    function availableOptions(query){
+      const q = (query||"").toLowerCase().trim();
+      const all = normalizeList(state.employees);
+      const current = new Set(getPeopleArrayForCode(code).map(x => x.toLowerCase()));
+      return all
+        .filter(n => !current.has(n.toLowerCase()))
+        .filter(n => !q || n.toLowerCase().includes(q))
+        .slice(0, 12);
+    }
+
+    function openDropdown(){
+      dropdown.classList.add("on");
+    }
+    function closeDropdown(){
+      dropdown.classList.remove("on");
+    }
+
+    function renderDropdown(){
+      dropdown.innerHTML = "";
+      const opts = availableOptions(input.value);
+
+      if(normalizeList(state.employees).length === 0){
+        const h = document.createElement("div");
+        h.className = "ddHint";
+        h.textContent = "Geen medewerkerslijst ingevuld. Vul onderaan je medewerkerslijst in en sla op.";
+        dropdown.appendChild(h);
+        return;
+      }
+
+      if(opts.length === 0){
+        const h = document.createElement("div");
+        h.className = "ddHint";
+        h.textContent = "Geen match (of iedereen is al toegevoegd).";
+        dropdown.appendChild(h);
+        return;
+      }
+
+      opts.forEach(name => {
+        const it = document.createElement("div");
+        it.className = "ddItem";
+        it.innerHTML = `<div>${escapeHtml(name)}</div><div class="ddSmall">klik om toe te voegen</div>`;
+        it.addEventListener("click", () => {
+          const arr = getPeopleArrayForCode(code);
+          arr.push(name);
+          input.value = "";
+          rerenderChips();
+          renderDropdown();
+          input.focus();
+        });
+        dropdown.appendChild(it);
+      });
+    }
+
+    input.addEventListener("focus", () => {
+      renderDropdown();
+      openDropdown();
+    });
+
+    input.addEventListener("input", () => {
+      renderDropdown();
+      openDropdown();
+    });
+
+    // close on click outside
+    document.addEventListener("click", (e) => {
+      if(!picker.contains(e.target)) closeDropdown();
+    });
+
+    picker.appendChild(input);
+    picker.appendChild(dropdown);
+
+    rerenderChips();
+    wrap.appendChild(chips);
+    wrap.appendChild(picker);
+
+    // expose for re-rendering if needed
+    wrap._rerenderChips = rerenderChips;
+    return wrap;
+  }
+
+  function renderServicesEditor(){
+    const tb = el("serviceEditorTable");
+    tb.innerHTML = "";
+
+    SERVICES.forEach(s => {
+      const a = state.assignments?.[s.code] || {};
+      const timeOverride = String(a.timeOverride||"");
+      const note = String(a.note||"");
+
+      const tr = document.createElement("tr");
+      tr.className = "trow";
+
+      const tdCode = document.createElement("td");
+      tdCode.style.fontFamily = "var(--mono)";
+      tdCode.textContent = s.code;
+
+      const tdName = document.createElement("td");
+      tdName.textContent = s.name;
+
+      const tdPeople = document.createElement("td");
+      const picker = buildEmployeePicker(s.code);
+      tdPeople.appendChild(picker);
+
+      const tdTime = document.createElement("td");
+      const inTime = document.createElement("input");
+      inTime.type = "text";
+      inTime.placeholder = defaultTimeForCode(s.code);
+      inTime.value = timeOverride;
+      inTime.addEventListener("input", (e) => {
+        if(!state.assignments[s.code]) state.assignments[s.code] = { people: [], timeOverride:"", note:"" };
+        state.assignments[s.code].timeOverride = e.target.value;
+      });
+      tdTime.appendChild(inTime);
+
+      const tdNote = document.createElement("td");
+      const inNote = document.createElement("input");
+      inNote.type = "text";
+      inNote.placeholder = "—";
+      inNote.value = note;
+      inNote.addEventListener("input", (e) => {
+        if(!state.assignments[s.code]) state.assignments[s.code] = { people: [], timeOverride:"", note:"" };
+        state.assignments[s.code].note = e.target.value;
+      });
+      tdNote.appendChild(inNote);
+
+      tr.appendChild(tdCode);
+      tr.appendChild(tdName);
+      tr.appendChild(tdPeople);
+      tr.appendChild(tdTime);
+      tr.appendChild(tdNote);
+
+      tb.appendChild(tr);
+    });
+  }
+
+  function renderRoster(lines){
+    const box = el("rosterList");
+    box.innerHTML = "";
+    (lines||[]).forEach(line => {
+      const parts = line.split("|").map(x=>x.trim());
+      const title = parts[0] || "—";
+      const owner = parts[1] || "";
+      const status = safeStatus(parts[2] || "");
+
+      const item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = `
+        <div class="left">
+          <p class="title">${escapeHtml(title)}</p>
+          ${owner ? `<p class="meta">Owner: ${escapeHtml(owner)}</p>` : ``}
+        </div>
+        <div>${mkBadge(status ? status.toUpperCase() : "—", status).outerHTML}</div>
+      `;
+      box.appendChild(item);
+    });
+  }
+
+  function renderTHT(lines){
+    const box = el("thtList");
+    box.innerHTML = "";
+
+    const parsed = (lines||[]).map((line, idx) => {
+      const parts = line.split("|").map(x=>x.trim());
+      const itemName = parts[0] || "—";
+      const dateStr  = parts[1] || "";
+      const note     = parts[2] || "";
+      const st = thtStatus(dateStr);
+      const sortKey = st.date ? st.date.getTime() : Number.POSITIVE_INFINITY;
+      return { idx, itemName, dateStr, note, st, sortKey };
+    });
+
+    parsed.sort((a,b) => (a.sortKey - b.sortKey) || (a.idx - b.idx));
+
+    parsed.forEach(p => {
+      const item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = `
+        <div class="left">
+          <p class="title">${escapeHtml(p.itemName)}</p>
+          <p class="meta">THT: ${escapeHtml(p.dateStr || "—")}${p.note ? ` • ${escapeHtml(p.note)}` : ""}</p>
+        </div>
+        <div>${mkBadge(p.st.label, p.st.status).outerHTML}</div>
+      `;
+      box.appendChild(item);
+    });
+  }
+
+  function applyStateToInputs(){
+    el("inTitle").value = state.title;
+    el("inSubtitle").value = state.subtitle;
+    el("inTeam").value = state.team;
+    el("inDate").value = state.date || "";
+    el("onlyFilled").checked = !!state.onlyFilled;
+
+    el("inRoster").value = (state.rosterChanges||[]).join("\n");
+    el("inTHT").value = (state.tht||[]).join("\n");
+
+    el("inPkg").value = state.packages.total;
+    el("inPkgStatus").value = state.packages.status;
+    el("inPkgDetail").value = state.packages.detail || "";
+
+    el("inSupply").value = state.supply.total;
+    el("inSupplyStatus").value = state.supply.status;
+    el("inSupplyDetail").value = state.supply.detail || "";
+
+    el("inNotes").value = state.notes || "";
+
+    el("inEmployees").value = (state.employees||[]).join("\n");
+  }
+
+  function readInputsToState(){
+    state.title = el("inTitle").value.trim() || DEFAULT.title;
+    state.subtitle = el("inSubtitle").value.trim() || DEFAULT.subtitle;
+    state.team = el("inTeam").value.trim() || DEFAULT.team;
+    state.date = el("inDate").value || "";
+    state.onlyFilled = !!el("onlyFilled").checked;
+
+    state.rosterChanges = (el("inRoster").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
+    state.tht = (el("inTHT").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
+
+    state.employees = (el("inEmployees").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
+
+    state.packages = {
+      total: el("inPkg").value === "" ? "" : Number(el("inPkg").value),
+      status: safeStatus(el("inPkgStatus").value),
+      detail: el("inPkgDetail").value.trim() || "—"
+    };
+    state.supply = {
+      total: el("inSupply").value === "" ? "" : Number(el("inSupply").value),
+      status: safeStatus(el("inSupplyStatus").value),
+      detail: el("inSupplyDetail").value.trim() || "—"
+    };
+    state.notes = el("inNotes").value;
+  }
+
+  function render(){
+    setText("title", state.title);
+    setText("subtitle", state.subtitle);
+    setText("teamBadge", `Team: ${state.team || "—"}`);
+
+    const shownDate = state.date ? new Date(state.date + "T00:00:00") : new Date();
+    setText("dateBadge", `Datum: ${shownDate.toLocaleDateString("nl-NL")}`);
+
+    renderKPIs();
+    renderServicesTable();
+    renderRoster(state.rosterChanges);
+    renderTHT(state.tht);
+
+    el("pkgTile").className = "tile " + safeStatus(state.packages.status);
+    setText("pkgValue", state.packages.total !== "" ? String(state.packages.total) : "—");
+    setText("pkgSmall", state.packages.detail || "—");
+
+    el("supplyTile").className = "tile " + safeStatus(state.supply.status);
+    setText("supplyValue", state.supply.total !== "" ? String(state.supply.total) : "—");
+    setText("supplySmall", state.supply.detail || "—");
+
+    el("notesView").textContent = state.notes ? state.notes : "—";
+
+    // editor toggles
+    el("editorHeader").classList.toggle("on", editMode);
+    el("editorSide").classList.toggle("on", editMode);
+    el("editorRoster").classList.toggle("on", editMode);
+    el("editorTHT").classList.toggle("on", editMode);
+    el("editorServices").classList.toggle("on", editMode);
+
+    setText("modeLabel", editMode ? "Edit" : "View");
+    el("dotEdit").className = "dot " + (editMode ? "warn" : "");
+
+    if(editMode) renderServicesEditor();
+  }
+
+  function tick(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,"0");
+    const mm = String(now.getMinutes()).padStart(2,"0");
+    setText("clock", `${hh}:${mm}`);
+    setText("today", now.toLocaleDateString("nl-NL", { year:"numeric", month:"long", day:"numeric" }));
+    setText("weekday", now.toLocaleDateString("nl-NL", { weekday:"long" }));
+    el("dotLive").className = "dot good";
+  }
+
+  function newDaystart(){
+    const keep = {
+      title: state.title,
+      subtitle: state.subtitle,
+      team: state.team,
+      onlyFilled: state.onlyFilled,
+      employees: Array.isArray(state.employees) ? state.employees : []
+    };
+
+    state.packages = { total:"", status:"", detail:"—" };
+    state.supply   = { total:"", status:"", detail:"—" };
+    state.notes = "";
+    state.rosterChanges = [];
+    state.tht = [];
+    state.assignments = {}; // clear all selections for the day
+    state.date = todayISO();
+
+    state.title = keep.title;
+    state.subtitle = keep.subtitle;
+    state.team = keep.team;
+    state.onlyFilled = keep.onlyFilled;
+    state.employees = keep.employees;
+
+    saveState(state);
+    render();
+    alert("Nieuwe dagstart klaar ✅ (daggegevens zijn gewist)");
+  }
+
+  // Buttons / events
+  el("newDayBtn").addEventListener("click", () => {
+    if(confirm("Nieuwe dagstart starten? Dit wist bezetting/pakketjes/bevoorrading/rooster/THT/notities.")){
+      newDaystart();
+    }
+  });
+
+  el("toggleEdit").addEventListener("click", () => {
+    editMode = !editMode;
+    if(editMode) applyStateToInputs();
+    render();
+  });
+
+  el("saveBtn").addEventListener("click", () => {
+    if(editMode) readInputsToState();
+    saveState(state);
+    render();
+    alert("Opgeslagen op deze browser/pc ✅");
+  });
+
+  el("resetBtn").addEventListener("click", () => {
+    if(confirm("Alles resetten naar leeg (incl. medewerkerslijst)?")){
+      localStorage.removeItem(LS_KEY);
+      state = loadState();
+      editMode = false;
+      render();
+    }
+  });
+
+  el("onlyFilled").addEventListener("change", () => {
+    state.onlyFilled = el("onlyFilled").checked;
+    saveState(state);
+    render();
+  });
+
+  // Init
+  tick();
+  setInterval(tick, 1000 * 10);
+  render();
+</script>
+</body>
+</html>
