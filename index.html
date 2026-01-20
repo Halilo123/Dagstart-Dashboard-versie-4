@@ -95,7 +95,7 @@
     .panel{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 18px;
       box-shadow: var(--shadow);
       overflow:hidden;
     }
@@ -120,7 +120,7 @@
     .tile{
       background: rgba(0,0,0,.15);
       border: 1px solid var(--border);
-      border-radius: var(--radius2);
+      border-radius: 14px;
       padding:12px 12px;
       min-height:86px;
       display:flex;
@@ -138,7 +138,7 @@
     .trow{
       background: rgba(0,0,0,.15);
       border: 1px solid var(--border);
-      border-radius: var(--radius2);
+      border-radius: 14px;
       overflow:hidden;
     }
     .trow td, .trow th{
@@ -148,20 +148,13 @@
       vertical-align:top;
     }
     .twrap{overflow:auto;}
-    /* ✅ autoscroll viewport voor de lange dienstenlijst */
-    .twrap.autoscroll{
-      max-height: 58vh;
-    }
+    .twrap.autoscroll{ max-height: 58vh; }
 
-    .list{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
+    .list{display:flex; flex-direction:column; gap:10px;}
     .item{
       background: rgba(0,0,0,.15);
       border: 1px solid var(--border);
-      border-radius: var(--radius2);
+      border-radius: 14px;
       padding: 10px 12px;
       display:flex;
       gap:12px;
@@ -221,7 +214,7 @@
       cursor:pointer;
       user-select:none;
     }
-    .toggle input{accent-color: #60a5fa;}
+    .toggle input{accent-color:#60a5fa;}
 
     /* Employee chips + picker */
     .empWrap{display:flex; flex-direction:column; gap:8px; min-width:340px;}
@@ -307,7 +300,7 @@
         <div class="panel-h">
           <div>
             <h2>Vandaag</h2>
-            <div class="hint">Alle diensten zichtbaar • medewerkers klik je aan • auto-scroll in View (pauze bij hover)</div>
+            <div class="hint">Auto-scroll: loopt door tot onderaan → springt naar boven → herhaalt. Pauze bij scroll/touch.</div>
           </div>
           <div class="chips">
             <span class="badge" id="dateBadge">Datum: —</span>
@@ -331,7 +324,6 @@
               </label>
             </div>
 
-            <!-- ✅ autoscroll container -->
             <div class="twrap autoscroll" id="serviceScroll" style="margin-top:10px;">
               <table>
                 <thead>
@@ -346,7 +338,6 @@
               </table>
             </div>
 
-            <!-- Editor diensten -->
             <div class="editor" id="editorServices">
               <div class="hint" style="margin-bottom:10px;">
                 Tip: medewerkers kun je per dienst zoeken en aanklikken. Verwijderen kan met ×.
@@ -374,7 +365,6 @@
             </div>
           </div>
 
-          <!-- Roosteraanpassingen (links) -->
           <div style="margin-top:14px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
               <h3 style="margin:0;">Roosteraanpassingen</h3>
@@ -388,7 +378,6 @@
             </div>
           </div>
 
-          <!-- Editor header -->
           <div class="editor" id="editorHeader">
             <div class="formgrid" style="margin-top:12px;">
               <div>
@@ -503,12 +492,12 @@
     </div>
 
     <div class="hint" style="margin-top:14px;">
-      Opslaan is lokaal op de browser/PC (localStorage). Auto-scroll pauzeert bij hover/scroll/touch.
+      Opslaan is lokaal (localStorage). Auto-scroll werkt ook met “Toon alleen met medewerkers”.
     </div>
   </div>
 
 <script>
-  const LS_KEY = "dagstart_dashboard_employees_v5";
+  const LS_KEY = "dagstart_dashboard_employees_v6";
   const HISTORY_PREFIX = "dagstart_history_assignments_";
 
   const SERVICES = [
@@ -750,6 +739,10 @@
     });
 
     saveState(state);
+
+    // ✅ bij kopiëren ook weer netjes bovenaan beginnen
+    resetAutoScrollTop();
+
     render();
     alert(`Bezetting gekopieerd van: ${prev}`);
   }
@@ -1085,6 +1078,76 @@
     state.notes = el("inNotes").value;
   }
 
+  // --- Auto-scroll (loop naar boven) ---
+  let scrollTimer = null;
+  let scrollPausedUntil = 0;
+  let lastUserScrollAt = 0;
+
+  function resetAutoScrollTop(){
+    const box = el("serviceScroll");
+    if(box) box.scrollTop = 0;
+  }
+
+  function shouldAutoScroll(){
+    if(editMode) return false;
+    const box = el("serviceScroll");
+    if(!box) return false;
+    if(box.scrollHeight <= box.clientHeight + 2) return false;
+    if(Date.now() < scrollPausedUntil) return false;
+    if(Date.now() - lastUserScrollAt < 1200) return false;
+    return true;
+  }
+
+  function stepAutoScroll(){
+    const box = el("serviceScroll");
+    if(!box) return;
+
+    const speed = 0.85; // snelheid px per tick (16ms)
+
+    const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 1;
+    if(atBottom){
+      // pauze onderaan, spring naar boven, korte pauze, doorgaan
+      scrollPausedUntil = Date.now() + 900;
+      box.scrollTop = 0;
+      scrollPausedUntil = Date.now() + 500;
+      return;
+    }
+    box.scrollTop += speed;
+  }
+
+  function startAutoScroll(){
+    if(scrollTimer) return;
+    scrollTimer = setInterval(() => {
+      if(shouldAutoScroll()) stepAutoScroll();
+    }, 16);
+  }
+
+  function stopAutoScroll(){
+    if(scrollTimer) clearInterval(scrollTimer);
+    scrollTimer = null;
+  }
+
+  function attachAutoScrollHandlers(){
+    const box = el("serviceScroll");
+    if(!box) return;
+
+    // pauze als user zelf scrollt/toucht
+    box.addEventListener("wheel", () => {
+      lastUserScrollAt = Date.now();
+      scrollPausedUntil = Date.now() + 2500;
+    }, { passive:true });
+
+    box.addEventListener("touchstart", () => {
+      lastUserScrollAt = Date.now();
+      scrollPausedUntil = Date.now() + 3500;
+    }, { passive:true });
+
+    box.addEventListener("touchmove", () => {
+      lastUserScrollAt = Date.now();
+      scrollPausedUntil = Date.now() + 3500;
+    }, { passive:true });
+  }
+
   function render(){
     setText("title", state.title);
     setText("subtitle", state.subtitle);
@@ -1094,7 +1157,14 @@
     setText("dateBadge", `Datum: ${shownDate.toLocaleDateString("nl-NL")}`);
 
     renderKPIs();
+
+    // ✅ rendering beïnvloedt scrollHeight → na render resetten en laten lopen
+    const beforeOnlyFilled = state.onlyFilled;
     renderServicesTable();
+    if(beforeOnlyFilled !== state.onlyFilled){
+      // (veiligheidsnet; meestal niet nodig)
+    }
+
     renderRoster(state.rosterChanges);
     renderTHT(state.tht);
 
@@ -1117,14 +1187,12 @@
     setText("modeLabel", editMode ? "Edit" : "View");
     el("dotEdit").className = "dot " + (editMode ? "warn" : "");
 
-    // ✅ auto-scroll alleen in view
     if(editMode){
       stopAutoScroll();
+      if(editMode) renderServicesEditor();
     }else{
       startAutoScroll();
     }
-
-    if(editMode) renderServicesEditor();
   }
 
   function tick(){
@@ -1159,85 +1227,11 @@
     state.employees = keep.employees;
 
     saveState(state);
+
+    resetAutoScrollTop();
+
     render();
     alert("Nieuwe dagstart klaar ✅ (daggegevens zijn gewist)");
-  }
-
-  // --- Auto-scroll diensten (alleen View) ---
-  let scrollTimer = null;
-  let scrollDir = 1;
-  let scrollPausedUntil = 0;
-  let lastUserScrollAt = 0;
-
-  function shouldAutoScroll(){
-    if(editMode) return false;
-    const box = el("serviceScroll");
-    if(!box) return false;
-    if(box.scrollHeight <= box.clientHeight + 2) return false;
-    if(Date.now() < scrollPausedUntil) return false;
-    if(Date.now() - lastUserScrollAt < 1500) return false;
-    return true;
-  }
-
-  function stepAutoScroll(){
-    const box = el("serviceScroll");
-    if(!box) return;
-
-    const speed = 0.6;
-
-    const atTop = box.scrollTop <= 0;
-    const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 1;
-
-    if(atBottom){
-      scrollDir = -1;
-      scrollPausedUntil = Date.now() + 1200;
-      return;
-    }
-    if(atTop){
-      scrollDir = 1;
-      scrollPausedUntil = Date.now() + 800;
-      return;
-    }
-    box.scrollTop += speed * scrollDir;
-  }
-
-  function startAutoScroll(){
-    if(scrollTimer) return;
-    scrollTimer = setInterval(() => {
-      if(shouldAutoScroll()) stepAutoScroll();
-    }, 16);
-  }
-
-  function stopAutoScroll(){
-    if(scrollTimer) clearInterval(scrollTimer);
-    scrollTimer = null;
-  }
-
-  function attachAutoScrollHandlers(){
-    const box = el("serviceScroll");
-    if(!box) return;
-
-    box.addEventListener("mouseenter", () => {
-      scrollPausedUntil = Date.now() + 999999;
-    });
-    box.addEventListener("mouseleave", () => {
-      scrollPausedUntil = Date.now() + 800;
-    });
-
-    box.addEventListener("wheel", () => {
-      lastUserScrollAt = Date.now();
-      scrollPausedUntil = Date.now() + 2000;
-    }, { passive:true });
-
-    // touch/drag op tablet
-    box.addEventListener("touchstart", () => {
-      lastUserScrollAt = Date.now();
-      scrollPausedUntil = Date.now() + 3000;
-    }, { passive:true });
-    box.addEventListener("touchmove", () => {
-      lastUserScrollAt = Date.now();
-      scrollPausedUntil = Date.now() + 3000;
-    }, { passive:true });
   }
 
   // Buttons / events
@@ -1255,7 +1249,13 @@
 
   el("toggleEdit").addEventListener("click", () => {
     editMode = !editMode;
-    if(editMode) applyStateToInputs();
+    if(editMode){
+      applyStateToInputs();
+      stopAutoScroll();
+    }else{
+      resetAutoScrollTop();
+      startAutoScroll();
+    }
     render();
   });
 
@@ -1264,6 +1264,9 @@
     const dateKey = getEffectiveDateForHistory();
     storeHistoryForDate(dateKey);
     saveState(state);
+
+    resetAutoScrollTop();
+
     render();
     alert("Opgeslagen op deze browser/PC ✅");
   });
@@ -1273,6 +1276,7 @@
       localStorage.removeItem(LS_KEY);
       state = loadState();
       editMode = false;
+      resetAutoScrollTop();
       render();
     }
   });
@@ -1280,6 +1284,10 @@
   el("onlyFilled").addEventListener("change", () => {
     state.onlyFilled = el("onlyFilled").checked;
     saveState(state);
+
+    // ✅ bij filter wissel weer bovenaan beginnen
+    resetAutoScrollTop();
+
     render();
   });
 
@@ -1288,6 +1296,7 @@
   setInterval(tick, 1000 * 10);
   render();
   attachAutoScrollHandlers();
+  resetAutoScrollTop();
   startAutoScroll();
 </script>
 </body>
