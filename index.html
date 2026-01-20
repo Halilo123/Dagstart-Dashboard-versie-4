@@ -248,9 +248,7 @@
       font-weight:800;
       line-height:1;
     }
-    .empPicker{
-      position:relative;
-    }
+    .empPicker{position:relative;}
     .dropdown{
       position:absolute;
       top: 44px;
@@ -299,6 +297,9 @@
 
       <div class="btnrow">
         <button class="neutral" id="newDayBtn">Nieuwe dagstart</button>
+        <button class="neutral" id="copyPrevBtn" title="Zet de meest recent opgeslagen bezetting in de diensten van vandaag">
+          Kopieer bezetting (vorige dag)
+        </button>
         <button class="primary" id="toggleEdit">Bewerken</button>
         <button id="saveBtn">Opslaan</button>
         <button class="danger" id="resetBtn">Reset</button>
@@ -327,7 +328,7 @@
             <div class="rowtools">
               <div>
                 <h3 style="margin:0;">Diensten & bezetting</h3>
-                <div class="hint">OK-3 en MD starten 07:00 • rest 08:00 (tenzij override)</div>
+                <div class="hint">OK-3, MD en WKZ (behalve W-PP) starten 07:00 • rest 08:00 (tenzij override)</div>
               </div>
               <label class="toggle" title="Handig voor TV-view">
                 <input type="checkbox" id="onlyFilled" />
@@ -352,7 +353,7 @@
             <!-- Editor diensten -->
             <div class="editor" id="editorServices">
               <div class="hint" style="margin-bottom:10px;">
-                Tip: maak eerst je medewerkerslijst (hieronder). Daarna kun je per dienst medewerkers <b>aanklikken</b>.
+                Tip: medewerkers kun je per dienst zoeken en aanklikken. Verwijderen kan met ×.
               </div>
               <div class="twrap">
                 <table>
@@ -371,8 +372,8 @@
 
               <div class="editor on" style="border-top:none; padding-top:0; margin-top:14px;">
                 <label>Medewerkerslijst (1 naam per regel)</label>
-                <textarea id="inEmployees" placeholder="Bijv.&#10;Younes&#10;Tim&#10;Lion&#10;Mille"></textarea>
-                <div class="hint">Na opslaan kun je per dienst zoeken en klikken.</div>
+                <textarea id="inEmployees"></textarea>
+                <div class="hint">Je hoeft dit normaal niet aan te passen, maar kan wel.</div>
               </div>
             </div>
           </div>
@@ -510,13 +511,13 @@
     </div>
 
     <div class="hint" style="margin-top:14px;">
-      Opslaan is lokaal op de browser/PC (localStorage). Voor meerdere schermen kunnen we later import/export uitbreiden.
-      <span class="badge" style="margin-left:10px;">THT: rood ≤ 1 maand • oranje ≤ 3 maanden</span>
+      Opslaan is lokaal op de browser/PC (localStorage). THT: <span class="badge bad">rood ≤ 1 maand</span> <span class="badge warn">oranje ≤ 3 maanden</span>
     </div>
   </div>
 
 <script>
-  const LS_KEY = "dagstart_dashboard_employees_v1";
+  const LS_KEY = "dagstart_dashboard_employees_v3";
+  const HISTORY_PREFIX = "dagstart_history_assignments_"; // + YYYY-MM-DD
 
   const SERVICES = [
     { name:"OC vroeg", code:"OC-V" },
@@ -568,15 +569,59 @@
     onlyFilled: false,
 
     employees: [
-      // vul via bewerkmodus
+      "Halil Akbulak",
+      "Jerico v Baayen",
+      "Roy Bennink",
+      "Jouke Bergboer",
+      "Christoph de Bosscher",
+      "Kai Bouwman",
+      "Slavojka Bujadnjak",
+      "Snježana Buljan-Delic",
+      "Tim de Cooker",
+      "Kees Dekker",
+      "Marvin Directie",
+      "Jan-Willem van Dijk",
+      "Wouter van Dijk",
+      "Gerard van Doorn",
+      "Mile Dzemov",
+      "Lyon van de Elskamp",
+      "Hafida Ettaoui",
+      "Marga Feddes",
+      "Angelique Florie",
+      "Igor Golac",
+      "André Hemelrijk",
+      "Chloe Hoeijenbos",
+      "Grada van der Horst",
+      "Yvonne van Hugten",
+      "Lidija Ilieva",
+      "Aco Ivanov (2)",
+      "Dennis Jansen",
+      "Elena Klintouk",
+      "Dejan Kostic",
+      "Chris van der Linden",
+      "Joelle Linschoten",
+      "Sebastian Murphy",
+      "Regina Nijhuis",
+      "Stan van den Oudendal",
+      "Ronald de Rooij",
+      "Ruben Schomakermeijer",
+      "Jelle Smits",
+      "Gordon Soe-Agnie",
+      "Ruben Surija",
+      "Eliza Thakoer",
+      "Younes Toufiq",
+      "Lorenz van Vliet",
+      "Frank van Wierst",
+      "Karin Witteveen",
+      "Thom Woesthoff",
+      "Jurriaan Zwanenburg"
     ],
 
     packages: { total: "", status: "", detail: "—" },
     supply:   { total: "", status: "", detail: "—" },
     notes: "",
 
-    // code -> { people: string[], timeOverride, note }
-    assignments: {},
+    assignments: {}, // code -> { people: string[], timeOverride, note }
 
     rosterChanges: [],
     tht: [],
@@ -613,12 +658,17 @@
       .replaceAll("\"","&quot;")
       .replaceAll("'","&#039;");
   }
+
+  // OK-3, MD en alle W-* behalve W-PP vroeg
   function defaultTimeForCode(code){
     const c = String(code||"").toUpperCase().trim();
-    return (c==="OK-3" || c==="MD") ? "07:00–15:30" : "08:00–16:30";
+    const isWKZ = c.startsWith("W-");
+    const wkzEarly = isWKZ && c !== "W-PP";
+    if (c === "OK-3" || c === "MD" || wkzEarly) return "07:00–15:30";
+    return "08:00–16:30";
   }
 
-  // --- THT ---
+  // --- THT (DD-MM-YYYY) ---
   function parseDateFlexible(s){
     s = (s || "").trim();
     if(!s) return null;
@@ -677,7 +727,103 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  // UI state
+  // --- History (voor kopieer vorige dag) ---
+  function getEffectiveDateForHistory(){
+    // Als state.date leeg is: gebruik vandaag (stabielere history keys)
+    return (state.date && String(state.date).trim()) ? String(state.date).trim() : todayISO();
+  }
+
+  function snapshotAssignments(){
+    // Deep clone maar alleen relevante velden
+    const snap = {};
+    SERVICES.forEach(s => {
+      const a = state.assignments?.[s.code] || {};
+      const people = Array.isArray(a.people) ? a.people.slice() : [];
+      const timeOverride = String(a.timeOverride || "");
+      const note = String(a.note || "");
+      if (people.length || timeOverride.trim() || note.trim()) {
+        snap[s.code] = { people, timeOverride, note };
+      }
+    });
+    return snap;
+  }
+
+  function storeHistoryForDate(dateStr){
+    try{
+      const key = HISTORY_PREFIX + dateStr;
+      localStorage.setItem(key, JSON.stringify({ date: dateStr, assignments: snapshotAssignments() }));
+    }catch{
+      // no-op
+    }
+  }
+
+  function listHistoryDates(){
+    const dates = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      if(k.startsWith(HISTORY_PREFIX)){
+        const dateStr = k.substring(HISTORY_PREFIX.length);
+        if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) dates.push(dateStr);
+      }
+    }
+    dates.sort(); // lex sort werkt voor YYYY-MM-DD
+    return dates;
+  }
+
+  function mostRecentHistoryBefore(dateStr){
+    const dates = listHistoryDates();
+    const filtered = dates.filter(d => d < dateStr);
+    return filtered.length ? filtered[filtered.length - 1] : null;
+  }
+
+  function loadHistory(dateStr){
+    try{
+      const raw = localStorage.getItem(HISTORY_PREFIX + dateStr);
+      if(!raw) return null;
+      const obj = JSON.parse(raw);
+      if(!obj || typeof obj !== "object") return null;
+      return obj;
+    }catch{
+      return null;
+    }
+  }
+
+  function copyAssignmentsFromPreviousDay(){
+    const todayKey = getEffectiveDateForHistory();
+    const prev = mostRecentHistoryBefore(todayKey) || (listHistoryDates().slice(-1)[0] || null);
+
+    if(!prev){
+      alert("Geen eerdere bezetting gevonden. Tip: sla eerst één dag op met bezetting.");
+      return;
+    }
+    if(prev === todayKey){
+      alert("Geen eerdere dag gevonden om te kopiëren.");
+      return;
+    }
+
+    const hist = loadHistory(prev);
+    if(!hist || !hist.assignments){
+      alert("Kon eerdere bezetting niet lezen.");
+      return;
+    }
+
+    // Overwrite alleen de dienst-assignments
+    state.assignments = {};
+    Object.keys(hist.assignments).forEach(code => {
+      const a = hist.assignments[code] || {};
+      state.assignments[code] = {
+        people: Array.isArray(a.people) ? a.people.slice() : [],
+        timeOverride: String(a.timeOverride || ""),
+        note: String(a.note || "")
+      };
+    });
+
+    saveState(state);
+    render();
+    alert(`Bezetting gekopieerd van: ${prev}`);
+  }
+
   let state = loadState();
   let editMode = false;
 
@@ -742,15 +888,12 @@
     });
   }
 
-  // Employee picker row renderer
   function buildEmployeePicker(code){
     const wrap = document.createElement("div");
     wrap.className = "empWrap";
 
     const chips = document.createElement("div");
     chips.className = "empChips";
-
-    const people = getPeopleArrayForCode(code);
 
     function rerenderChips(){
       chips.innerHTML = "";
@@ -766,6 +909,7 @@
       current.forEach((name, idx) => {
         const c = document.createElement("span");
         c.className = "empChip";
+
         const t = document.createElement("span");
         t.textContent = name;
 
@@ -797,9 +941,7 @@
     dropdown.className = "dropdown";
 
     function normalizeList(list){
-      return (list||[])
-        .map(x => String(x).trim())
-        .filter(Boolean);
+      return (list||[]).map(x => String(x).trim()).filter(Boolean);
     }
 
     function availableOptions(query){
@@ -812,12 +954,8 @@
         .slice(0, 12);
     }
 
-    function openDropdown(){
-      dropdown.classList.add("on");
-    }
-    function closeDropdown(){
-      dropdown.classList.remove("on");
-    }
+    function openDropdown(){ dropdown.classList.add("on"); }
+    function closeDropdown(){ dropdown.classList.remove("on"); }
 
     function renderDropdown(){
       dropdown.innerHTML = "";
@@ -826,7 +964,7 @@
       if(normalizeList(state.employees).length === 0){
         const h = document.createElement("div");
         h.className = "ddHint";
-        h.textContent = "Geen medewerkerslijst ingevuld. Vul onderaan je medewerkerslijst in en sla op.";
+        h.textContent = "Geen medewerkerslijst ingevuld.";
         dropdown.appendChild(h);
         return;
       }
@@ -855,17 +993,9 @@
       });
     }
 
-    input.addEventListener("focus", () => {
-      renderDropdown();
-      openDropdown();
-    });
+    input.addEventListener("focus", () => { renderDropdown(); openDropdown(); });
+    input.addEventListener("input", () => { renderDropdown(); openDropdown(); });
 
-    input.addEventListener("input", () => {
-      renderDropdown();
-      openDropdown();
-    });
-
-    // close on click outside
     document.addEventListener("click", (e) => {
       if(!picker.contains(e.target)) closeDropdown();
     });
@@ -877,8 +1007,6 @@
     wrap.appendChild(chips);
     wrap.appendChild(picker);
 
-    // expose for re-rendering if needed
-    wrap._rerenderChips = rerenderChips;
     return wrap;
   }
 
@@ -902,8 +1030,7 @@
       tdName.textContent = s.name;
 
       const tdPeople = document.createElement("td");
-      const picker = buildEmployeePicker(s.code);
-      tdPeople.appendChild(picker);
+      tdPeople.appendChild(buildEmployeePicker(s.code));
 
       const tdTime = document.createElement("td");
       const inTime = document.createElement("input");
@@ -1008,7 +1135,6 @@
     el("inSupplyDetail").value = state.supply.detail || "";
 
     el("inNotes").value = state.notes || "";
-
     el("inEmployees").value = (state.employees||[]).join("\n");
   }
 
@@ -1060,7 +1186,6 @@
 
     el("notesView").textContent = state.notes ? state.notes : "—";
 
-    // editor toggles
     el("editorHeader").classList.toggle("on", editMode);
     el("editorSide").classList.toggle("on", editMode);
     el("editorRoster").classList.toggle("on", editMode);
@@ -1097,7 +1222,7 @@
     state.notes = "";
     state.rosterChanges = [];
     state.tht = [];
-    state.assignments = {}; // clear all selections for the day
+    state.assignments = {};
     state.date = todayISO();
 
     state.title = keep.title;
@@ -1118,6 +1243,12 @@
     }
   });
 
+  el("copyPrevBtn").addEventListener("click", () => {
+    if(confirm("Bezetting van een eerdere dag kopiëren naar vandaag? Dit overschrijft de huidige bezetting.")){
+      copyAssignmentsFromPreviousDay();
+    }
+  });
+
   el("toggleEdit").addEventListener("click", () => {
     editMode = !editMode;
     if(editMode) applyStateToInputs();
@@ -1126,9 +1257,14 @@
 
   el("saveBtn").addEventListener("click", () => {
     if(editMode) readInputsToState();
+
+    // ✅ bij elke save: history snapshot van bezetting bewaren
+    const dateKey = getEffectiveDateForHistory();
+    storeHistoryForDate(dateKey);
+
     saveState(state);
     render();
-    alert("Opgeslagen op deze browser/pc ✅");
+    alert("Opgeslagen op deze browser/PC ✅");
   });
 
   el("resetBtn").addEventListener("click", () => {
