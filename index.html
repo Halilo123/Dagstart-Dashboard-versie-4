@@ -148,14 +148,9 @@
       vertical-align:top;
     }
     .twrap{overflow:auto;}
-
-    .twoCol{
-      display:grid;
-      gap:14px;
-      grid-template-columns: 1fr;
-    }
-    @media(min-width:900px){
-      .twoCol{grid-template-columns: 1fr 1fr;}
+    /* ✅ autoscroll viewport voor de lange dienstenlijst */
+    .twrap.autoscroll{
+      max-height: 58vh;
     }
 
     .list{
@@ -312,7 +307,7 @@
         <div class="panel-h">
           <div>
             <h2>Vandaag</h2>
-            <div class="hint">Alle diensten zichtbaar • medewerkers klik je aan • THT staat rechts in beeld</div>
+            <div class="hint">Alle diensten zichtbaar • medewerkers klik je aan • auto-scroll in View (pauze bij hover)</div>
           </div>
           <div class="chips">
             <span class="badge" id="dateBadge">Datum: —</span>
@@ -336,7 +331,8 @@
               </label>
             </div>
 
-            <div class="twrap" style="margin-top:10px;">
+            <!-- ✅ autoscroll container -->
+            <div class="twrap autoscroll" id="serviceScroll" style="margin-top:10px;">
               <table>
                 <thead>
                   <tr class="trow">
@@ -378,7 +374,7 @@
             </div>
           </div>
 
-          <!-- Roosteraanpassingen (blijft links) -->
+          <!-- Roosteraanpassingen (links) -->
           <div style="margin-top:14px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
               <h3 style="margin:0;">Roosteraanpassingen</h3>
@@ -507,12 +503,12 @@
     </div>
 
     <div class="hint" style="margin-top:14px;">
-      Opslaan is lokaal op de browser/PC (localStorage).
+      Opslaan is lokaal op de browser/PC (localStorage). Auto-scroll pauzeert bij hover/scroll/touch.
     </div>
   </div>
 
 <script>
-  const LS_KEY = "dagstart_dashboard_employees_v4";
+  const LS_KEY = "dagstart_dashboard_employees_v5";
   const HISTORY_PREFIX = "dagstart_history_assignments_";
 
   const SERVICES = [
@@ -1063,7 +1059,6 @@
 
     el("inNotes").value = state.notes || "";
     el("inEmployees").value = (state.employees||[]).join("\n");
-    el("inRoster").value = (state.rosterChanges||[]).join("\n");
   }
 
   function readInputsToState(){
@@ -1121,6 +1116,14 @@
 
     setText("modeLabel", editMode ? "Edit" : "View");
     el("dotEdit").className = "dot " + (editMode ? "warn" : "");
+
+    // ✅ auto-scroll alleen in view
+    if(editMode){
+      stopAutoScroll();
+    }else{
+      startAutoScroll();
+    }
+
     if(editMode) renderServicesEditor();
   }
 
@@ -1160,6 +1163,84 @@
     alert("Nieuwe dagstart klaar ✅ (daggegevens zijn gewist)");
   }
 
+  // --- Auto-scroll diensten (alleen View) ---
+  let scrollTimer = null;
+  let scrollDir = 1;
+  let scrollPausedUntil = 0;
+  let lastUserScrollAt = 0;
+
+  function shouldAutoScroll(){
+    if(editMode) return false;
+    const box = el("serviceScroll");
+    if(!box) return false;
+    if(box.scrollHeight <= box.clientHeight + 2) return false;
+    if(Date.now() < scrollPausedUntil) return false;
+    if(Date.now() - lastUserScrollAt < 1500) return false;
+    return true;
+  }
+
+  function stepAutoScroll(){
+    const box = el("serviceScroll");
+    if(!box) return;
+
+    const speed = 0.6;
+
+    const atTop = box.scrollTop <= 0;
+    const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 1;
+
+    if(atBottom){
+      scrollDir = -1;
+      scrollPausedUntil = Date.now() + 1200;
+      return;
+    }
+    if(atTop){
+      scrollDir = 1;
+      scrollPausedUntil = Date.now() + 800;
+      return;
+    }
+    box.scrollTop += speed * scrollDir;
+  }
+
+  function startAutoScroll(){
+    if(scrollTimer) return;
+    scrollTimer = setInterval(() => {
+      if(shouldAutoScroll()) stepAutoScroll();
+    }, 16);
+  }
+
+  function stopAutoScroll(){
+    if(scrollTimer) clearInterval(scrollTimer);
+    scrollTimer = null;
+  }
+
+  function attachAutoScrollHandlers(){
+    const box = el("serviceScroll");
+    if(!box) return;
+
+    box.addEventListener("mouseenter", () => {
+      scrollPausedUntil = Date.now() + 999999;
+    });
+    box.addEventListener("mouseleave", () => {
+      scrollPausedUntil = Date.now() + 800;
+    });
+
+    box.addEventListener("wheel", () => {
+      lastUserScrollAt = Date.now();
+      scrollPausedUntil = Date.now() + 2000;
+    }, { passive:true });
+
+    // touch/drag op tablet
+    box.addEventListener("touchstart", () => {
+      lastUserScrollAt = Date.now();
+      scrollPausedUntil = Date.now() + 3000;
+    }, { passive:true });
+    box.addEventListener("touchmove", () => {
+      lastUserScrollAt = Date.now();
+      scrollPausedUntil = Date.now() + 3000;
+    }, { passive:true });
+  }
+
+  // Buttons / events
   el("newDayBtn").addEventListener("click", () => {
     if(confirm("Nieuwe dagstart starten? Dit wist bezetting/pakketjes/bevoorrading/rooster/THT/notities.")){
       newDaystart();
@@ -1202,9 +1283,12 @@
     render();
   });
 
+  // Init
   tick();
   setInterval(tick, 1000 * 10);
   render();
+  attachAutoScrollHandlers();
+  startAutoScroll();
 </script>
 </body>
 </html>
